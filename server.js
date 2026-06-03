@@ -85,9 +85,11 @@ app.get('/api/export/csv', (req, res) => {
   }
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="问卷结果_' + new Date().toISOString().slice(0,10) + '.csv"');
+  res.setHeader('Content-Disposition', 'attachment; filename="wj_' + new Date().toISOString().slice(0,10) + '.csv"');
   // BOM for Excel to recognize UTF-8
-  res.send('\uFEFF' + csvRows.join('\n'));
+  const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+  const content = csvRows.join('\n');
+  res.send(Buffer.concat([bom, Buffer.from(content, 'utf-8')]));
 });
 
 // ---- 统计 ----
