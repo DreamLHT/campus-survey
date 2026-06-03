@@ -57,6 +57,35 @@ app.get('/api/results/:id', (req, res) => {
   res.json({ ok: true, data: record });
 });
 
+// ---- 导出 CSV ----
+app.get('/api/export/csv', (req, res) => {
+  const results = loadResults();
+  if (results.length === 0) {
+    return res.status(404).json({ ok: false, message: '暂无数据' });
+  }
+
+  const allQuestions = Object.keys(results[0].answers);
+  const headers = ['提交时间', ...allQuestions];
+  const csvRows = [headers.join(',')];
+
+  for (const record of results) {
+    const row = [
+      `"${record.submittedAt}"`,
+      ...allQuestions.map(q => {
+        const val = record.answers[q];
+        if (val == null) return '';
+        if (Array.isArray(val)) return `"${val.join('；')}"`;
+        return `"${String(val)}"`;
+      })
+    ];
+    csvRows.push(row.join(','));
+  }
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="问卷结果_' + new Date().toISOString().slice(0,10) + '.csv"');
+  res.send('\uFEFF' + csvRows.join('\n'));
+});
+
 // ---- 统计 ----
 app.get('/api/stats', (req, res) => {
   const results = loadResults();
