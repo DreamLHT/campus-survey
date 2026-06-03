@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3456;
+const PORT = process_params.env.PORT||3456
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
