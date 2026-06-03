@@ -64,7 +64,10 @@ app.get('/api/export/csv', (req, res) => {
     return res.status(404).json({ ok: false, message: '暂无数据' });
   }
 
+  // 收集所有题目作为列名
   const allQuestions = Object.keys(results[0].answers);
+
+  // 构建 CSV 头
   const headers = ['提交时间', ...allQuestions];
   const csvRows = [headers.join(',')];
 
@@ -83,6 +86,7 @@ app.get('/api/export/csv', (req, res) => {
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="问卷结果_' + new Date().toISOString().slice(0,10) + '.csv"');
+  // BOM for Excel to recognize UTF-8
   res.send('\uFEFF' + csvRows.join('\n'));
 });
 
