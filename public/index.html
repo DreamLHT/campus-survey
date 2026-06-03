@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>校园文明现状调查问卷</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container { max-width: 520px; margin: 0 auto; padding-bottom: 40px; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: #fff;
+      border-radius: 14px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .header p { font-size: 13px; opacity: .85; line-height: 1.5; }
+
+    /* Progress */
+    .progress-wrap {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .progress-header .title { font-size: 13px; font-weight: 600; color: #1f2937; }
+    .progress-header .pct { font-size: 12px; color: #6b7280; }
+    .progress-bar { height: 5px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-bar .fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #1a73e8, #0d47a1);
+      border-radius: 3px; transition: width 0.4s ease;
+    }
+
+    /* Card */
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px 18px;
+      margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      display: none;
+    }
+    .card.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .q-label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+    .q-title { font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.5; margin-bottom: 16px; }
+    .q-title .required { color: #ef4444; margin-left: 2px; }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      cursor: pointer; transition: all 0.2s; background: #fafbfc;
+    }
+    .option-item:hover { border-color: #8ab4f8; background: #f0f6ff; }
+    .option-item.selected { border-color: #1a73e8; background: #f0f6ff; }
+    .option-item input[type="radio"], .option-item input[type="checkbox"] { display: none; }
+    .option-item .custom-radio, .option-item .custom-checkbox {
+      flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center;
+      margin-top: 1px; transition: all 0.2s;
+    }
+    .option-item .custom-checkbox { border-radius: 4px; }
+    .option-item.selected .custom-radio, .option-item.selected .custom-checkbox { border-color: #1a73e8; background: #1a73e8; }
+    .option-item.selected .custom-radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+    .option-item.selected .custom-checkbox::after { content: "✓"; color: #fff; font-size: 14px; font-weight: 700; line-height: 1; }
+    .option-item .text { font-size: 15px; color: #374151; line-height: 1.4; flex: 1; }
+
+    /* Text Input */
+    .text-input {
+      width: 100%; padding: 12px 14px; font-size: 15px;
+      border: 1.5px solid #e5e7eb; border-radius: 10px; outline: none;
+      transition: border-color 0.2s; background: #fafbfc; font-family: inherit;
+      resize: vertical; min-height: 80px;
+    }
+    .text-input:focus { border-color: #1a73e8; background: #fff; }
+    .text-input-short { min-height: unset; height: 44px; resize: none; }
+    .char-count { text-align: right; font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+    /* Rating */
+    .rating-wrap { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .rating-btn {
+      width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #e5e7eb;
+      background: #fafbfc; font-size: 16px; font-weight: 600; color: #4b5563;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .rating-btn:hover { border-color: #8ab4f8; background: #f0f6ff; }
+    .rating-btn.selected { border-color: #1a73e8; background: #1a73e8; color: #fff; }
+    .rating-labels { display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 4px; padding: 0 4px; }
+
+    /* Navigation */
+    .nav-btns { display: flex; gap: 10px; margin-top: 4px; }
+    .nav-btns .btn {
+      flex: 1; padding: 14px 0; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-prev { background: #f3f4f6; color: #374151; }
+    .btn-prev:hover { background: #e5e7eb; }
+    .btn-next, .btn-submit { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; }
+    .btn-next:hover, .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-next:disabled, .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Submit Page */
+    .submit-page { text-align: center; padding: 40px 18px; }
+    .submit-page .icon { font-size: 48px; margin-bottom: 12px; }
+    .submit-page h2 { font-size: 20px; color: #1f2937; margin-bottom: 8px; }
+    .submit-page p { font-size: 14px; color: #6b7280; line-height: 1.6; }
+    .submit-page .view-link {
+      display: inline-block; margin-top: 16px; padding: 10px 24px;
+      background: #1a73e8; color: #fff; border-radius: 10px;
+      text-decoration: none; font-size: 14px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1f2937; color: #fff; padding: 12px 24px; border-radius: 10px;
+      font-size: 14px; opacity: 0; transition: all 0.3s; pointer-events: none;
+      white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .option-item.error { border-color: #ef4444; background: #fef2f2; }
+    .text-input.error { border-color: #ef4444; }
+
+    .bottom-bar {
+      text-align: center; margin-top: 12px; font-size: 12px; color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Header -->
+    <div class="header">
+      <h1>📋 校园文明现状调查</h1>
+      <p>思政期中考试 · 如实填写即可，感谢您的配合</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="title" id="progressTitle">问卷</span>
+        <span class="pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+    </div>
+
+    <div id="questionsContainer"></div>
+
+    <div class="nav-btns" id="navBtns">
+      <button class="btn btn-prev" id="btnPrev">上一题</button>
+      <button class="btn btn-next" id="btnNext">下一题</button>
+    </div>
+
+    <div class="bottom-bar">校园文明现状调查</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  // ==========================================
+  //  🗂️ 问卷题目 — 校园文明现状
+  // ==========================================
+  const QUESTIONS = [
+    {
+      id: "q1",
+      title: "您所在的年级是？",
+      type: "radio",
+      required: true,
+      options: ["大一", "大二", "大三", "大四"]
+    },
+    {
+      id: "q2",
+      title: "您认为目前校园内整体文明状况如何？",
+      type: "radio",
+      required: true,
+      options: ["非常好", "比较好", "一般", "较差", "非常差"]
+    },
+    {
+      id: "q3",
+      title: "您认为校园中存在哪些不文明现象？（可多选）",
+      type: "checkbox",
+      required: true,
+      options: ["随地吐痰/乱扔垃圾", "公共场所吸烟", "食堂插队/浪费食物", "上课玩手机/睡觉", "乱涂乱画/破坏公物", "言语粗俗/说脏话", "图书馆/自习室大声喧哗", "共享单车乱停乱放"]
+    },
+    {
+      id: "q4",
+      title: "您认为最严重的不文明现象是？",
+      type: "radio",
+      required: true,
+      options: ["随地吐痰/乱扔垃圾", "公共场所吸烟", "食堂插队/浪费食物", "上课玩手机/睡觉", "乱涂乱画/破坏公物", "言语粗俗/说脏话", "图书馆大声喧哗", "共享单车乱停乱放"]
+    },
+    {
+      id: "q5",
+      title: "您认为学校对校园不文明行为的管理力度如何？",
+      type: "radio",
+      required: true,
+      options: ["非常严格", "比较严格", "一般", "比较宽松", "基本不管"]
+    },
+    {
+      id: "q6",
+      title: "遇到不文明行为时，您通常怎么做？",
+      type: "radio",
+      required: true,
+      options: ["直接上前制止", "向老师或学校反映", "内心反感但不会行动", "视而不见", "看情况而定"]
+    },
+    {
+      id: "q7",
+      title: "您觉得以下哪些措施对改善校园文明最有效？（可多选，最多选3项）",
+      type: "checkbox",
+      required: true,
+      maxSelect: 3,
+      options: ["加强文明宣传教育", "加大处罚力度", "设立文明监督岗", "开展文明班级/宿舍评比", "完善校园基础设施", "老师以身作则", "增加志愿者活动"]
+    },
+    {
+      id: "q8",
+      title: "您自认为平时在校园中的文明表现如何？",
+      type: "rating",
+      required: true,
+      minLabel: "有待提高",
+      maxLabel: "非常优秀"
+    },
+    {
+      id: "q9",
+      title: "您认为校园文明建设最重要的意义是什么？",
+      type: "radio",
+      required: true,
+      options: ["营造良好学习环境", "培养学生综合素质", "提升学校形象", "促进同学间和谐相处", "为步入社会打好基础"]
+    },
+    {
+      id: "q10",
+      title: "您对改善校园文明有什么建议或想法？",
+      type: "textarea",
+      required: false,
+      placeholder: "请畅所欲言…"
+    }
+  ];
+
+  // ==========================================
+  //  State
+  // ==========================================
+  let answers = {};
+  let currentIdx = 0;
+  const total = QUESTIONS.length;
+  const API_BASE = ''; // same origin
+
+  const $ = s => document.querySelector(s);
+  const container = document.getElementById("questionsContainer");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const fill = document.getElementById("progressFill");
+  const pct = document.getElementById("progressPct");
+  const pTitle = document.getElementById("progressTitle");
+  const toast = document.getElementById("toast");
+
+  // ==========================================
+  //  Render
+  // ==========================================
+  function render() {
+    container.innerHTML = QUESTIONS.map((q, i) => {
+      const isActive = i === currentIdx;
+      const cls = isActive ? "card active" : "card";
+      const label = `第 ${i + 1} 题 / 共 ${total} 题`;
+      const reqMark = q.required ? '<span class="required">*</span>' : "";
+      let body = "";
+      if (q.type === "radio") body = renderRadio(q, i);
+      else if (q.type === "checkbox") body = renderCheckbox(q, i);
+      else if (q.type === "rating") body = renderRating(q, i);
+      else if (q.type === "textarea") body = renderTextarea(q, i);
+      return `<div class="${cls}" data-idx="${i}"><div class="q-label">${label}</div><div class="q-title">${q.title}${reqMark}</div>${body}</div>`;
+    }).join("");
+
+    // restore
+    QUESTIONS.forEach((q, i) => {
+      const card = container.querySelector(`.card[data-idx="${i}"]`);
+      if (!card) return;
+      const val = answers[q.id];
+      if (val == null) return;
+
+      if (q.type === "radio") {
+        const item = card.querySelector(`.option-item[data-value="${CSS.escape(val)}"]`);
+        if (item) item.classList.add("selected");
+      } else if (q.type === "checkbox") {
+        (val || []).forEach(v => {
+          const item = card.querySelector(`.option-item[data-value="${CSS.escape(v)}"]`);
+          if (item) item.classList.add("selected");
+        });
+      } else if (q.type === "rating") {
+        const btn = card.querySelector(`.rating-btn[data-value="${val}"]`);
+        if (btn) btn.classList.add("selected");
+      } else if (q.type === "textarea") {
+        const ta = card.querySelector(".text-input");
+        if (ta) ta.value = val;
+      }
+    });
+
+    updateProgress();
+    updateNav();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderRadio(q) {
+    return `<div class="options">${q.options.map(opt =>
+      `<div class="option-item" data-value="${opt}" data-qid="${q.id}" onclick="selectRadio('${q.id}','${opt}',this)">
+        <div class="custom-radio"></div><span class="text">${opt}</span>
+      </div>`
+    ).join("")}</div>`;
+  }
+
+  function renderCheckbox(q) {
+    return `<div class="options">${q.options.map(opt =>
+      `<div class="option-item" data-value="${opt}" data-qid="${q.id}" onclick="toggleCheckbox('${q.id}','${opt}',this)">
+        <div class="custom-checkbox"></div><span class="text">${opt}</span>
+      </div>`
+    ).join("")}</div>`;
+  }
+
+  function renderRating(q) {
+    const btns = Array.from({length:5}, (_,i) =>
+      `<button class="rating-btn" data-value="${i+1}" data-qid="${q.id}" onclick="selectRating('${q.id}',${i+1},this)">${i+1}</button>`
+    ).join("");
+    return `<div class="rating-wrap">${btns}</div>
+      <div class="rating-labels"><span>${q.minLabel||"很差"}</span><span>${q.maxLabel||"很好"}</span></div>`;
+  }
+
+  function renderTextarea(q) {
+    return `<textarea class="text-input" placeholder="${q.placeholder||"请输入…"}" data-qid="${q.id}" oninput="textInput('${q.id}',this)"></textarea>
+      <div class="char-count" id="charCount_${q.id}">0 字</div>`;
+  }
+
+  // ==========================================
+  //  Interactions
+  // ==========================================
+  window.selectRadio = function(qid, val, el) {
+    el.closest(".options").querySelectorAll(".option-item").forEach(e => e.classList.remove("selected","error"));
+    el.classList.add("selected");
+    answers[qid] = val;
+    clearError(qid);
+  };
+
+  window.toggleCheckbox = function(qid, val, el) {
+    const q = QUESTIONS.find(x => x.id === qid);
+    let arr = answers[qid] || [];
+    const idx = arr.indexOf(val);
+    if (idx >= 0) { arr.splice(idx, 1); el.classList.remove("selected"); }
+    else {
+      if (q.maxSelect && arr.length >= q.maxSelect) { showToast(`最多选择 ${q.maxSelect} 项`); return; }
+      arr.push(val); el.classList.add("selected");
+    }
+    answers[qid] = arr.length ? arr : undefined;
+    clearError(qid);
+  };
+
+  window.selectRating = function(qid, val, el) {
+    el.closest(".card").querySelectorAll(".rating-btn").forEach(e => e.classList.remove("selected"));
+    el.classList.add("selected");
+    answers[qid] = val;
+    clearError(qid);
+  };
+
+  window.textInput = function(qid, el) {
+    answers[qid] = el.value.trim() || undefined;
+    const cc = document.getElementById("charCount_" + qid);
+    if (cc) cc.textContent = el.value.length + " 字";
+    clearError(qid);
+  };
+
+  // ==========================================
+  //  Validation
+  // ==========================================
+  function validateCurrent() {
+    const q = QUESTIONS[currentIdx];
+    if (!q.required) return true;
+    const val = answers[q.id];
+    if (val == null || (Array.isArray(val) && val.length === 0)) {
+      markError(q.id); showToast("此题必填，请先作答"); return false;
+    }
+    return true;
+  }
+
+  function markError(qid) {
+    const idx = QUESTIONS.findIndex(q => q.id === qid);
+    const card = container.querySelector(`.card[data-idx="${idx}"]`);
+    if (!card) return;
+    card.querySelectorAll(".option-item").forEach(e => e.classList.add("error"));
+    const ta = card.querySelector(".text-input");
+    if (ta) ta.classList.add("error");
+  }
+
+  function clearError(qid) {
+    const idx = QUESTIONS.findIndex(q => q.id === qid);
+    const card = container.querySelector(`.card[data-idx="${idx}"]`);
+    if (!card) return;
+    card.querySelectorAll(".option-item").forEach(e => e.classList.remove("error"));
+    const ta = card.querySelector(".text-input");
+    if (ta) ta.classList.remove("error");
+  }
+
+  // ==========================================
+  //  Navigation
+  // ==========================================
+  btnNext.addEventListener("click", () => {
+    if (currentIdx === total - 1) { submit(); return; }
+    if (!validateCurrent()) return;
+    currentIdx++; render();
+  });
+
+  btnPrev.addEventListener("click", () => {
+    if (currentIdx > 0) { currentIdx--; render(); }
+  });
+
+  function updateNav() {
+    btnPrev.style.visibility = currentIdx === 0 ? "hidden" : "visible";
+    btnNext.textContent = currentIdx === total - 1 ? "提交问卷" : "下一题";
+  }
+
+  function updateProgress() {
+    const p = Math.round(((currentIdx + 1) / total) * 100);
+    fill.style.width = p + "%";
+    pct.textContent = p + "%";
+    pTitle.textContent = `第 ${currentIdx + 1} 题`;
+  }
+
+  // ==========================================
+  //  Submit
+  // ==========================================
+  async function submit() {
+    // validate all required
+    for (const q of QUESTIONS) {
+      if (!q.required) continue;
+      if (answers[q.id] == null || (Array.isArray(answers[q.id]) && answers[q.id].length === 0)) {
+        currentIdx = QUESTIONS.indexOf(q);
+        render(); markError(q.id);
+        showToast("请完成所有必填题后再提交");
+        return;
+      }
+    }
+
+    // build answer map
+    const answerMap = {};
+    QUESTIONS.forEach(q => {
+      answerMap[q.title] = answers[q.id] || (q.type === "checkbox" ? [] : "");
+    });
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: answerMap })
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast('提交失败，请重试'); return; }
+    } catch (e) {
+      showToast('网络错误，请检查服务是否运行');
+      return;
+    }
+
+    // success
+    container.innerHTML = `
+      <div class="card active submit-page">
+        <div class="icon">🎉</div>
+        <h2>提交成功！</h2>
+        <p>感谢您参与本次校园文明现状调查！<br>您的每一份反馈都将帮助我们建设更好的校园。</p>
+        <a class="view-link" href="/results.html" target="_blank">📊 查看调查结果</a>
+      </div>
+    `;
+    btnPrev.style.display = "none";
+    btnNext.style.display = "none";
+    fill.style.width = "100%";
+    pct.textContent = "100%";
+    pTitle.textContent = "已完成";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ==========================================
+  //  Toast
+  // ==========================================
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  // ==========================================
+  //  Init
+  // ==========================================
+  render();
+  </script>
+</body>
+</html>

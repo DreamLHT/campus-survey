@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调查结果 - 校园文明现状</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
+
+    .header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: #fff; border-radius: 14px; padding: 24px 20px;
+      margin-bottom: 16px; text-align: center;
+    }
+    .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .header p { font-size: 13px; opacity: .85; }
+    .header .total-badge {
+      display: inline-block; margin-top: 10px; padding: 6px 18px;
+      background: rgba(255,255,255,.2); border-radius: 20px;
+      font-size: 14px; font-weight: 600;
+    }
+
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+    }
+    .tab {
+      flex-shrink: 0; padding: 10px 20px; border-radius: 10px;
+      border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+      background: #fff; color: #6b7280; transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .tab.active { background: #1a73e8; color: #fff; }
+    .tab:hover:not(.active) { background: #f0f6ff; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .stat-card {
+      background: #fff; border-radius: 12px; padding: 18px;
+      margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .stat-card h3 {
+      font-size: 15px; font-weight: 600; color: #1f2937;
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .stat-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px; font-size: 14px;
+    }
+    .stat-row .label { color: #374151; min-width: 140px; flex-shrink: 0; }
+    .stat-row .bar-wrap { flex: 1; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden; position: relative; }
+    .stat-row .bar-fill {
+      height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4a90d9, #1a73e8);
+      transition: width 0.5s ease; min-width: 4px;
+    }
+    .stat-row .count {
+      min-width: 40px; text-align: right; color: #6b7280; font-size: 13px; flex-shrink: 0;
+    }
+    .stat-row .pct-label {
+      min-width: 36px; text-align: right; color: #1a73e8; font-weight: 600; font-size: 13px; flex-shrink: 0;
+    }
+
+    .avg-badge {
+      display: inline-block; padding: 4px 12px; background: #f0f6ff;
+      border-radius: 6px; color: #1a73e8; font-weight: 600; font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .detail-item {
+      padding: 12px; background: #fafbfc; border-radius: 8px;
+      margin-bottom: 8px; font-size: 14px; color: #374151; line-height: 1.5;
+    }
+    .detail-item .meta {
+      font-size: 12px; color: #9ca3af; margin-top: 4px;
+    }
+
+    /* Individual records */
+    .record-card {
+      background: #fff; border-radius: 12px; padding: 16px 18px;
+      margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .record-card .record-meta {
+      font-size: 12px; color: #9ca3af; margin-bottom: 8px;
+    }
+    .record-card .record-answers {
+      font-size: 13px; line-height: 1.6; color: #374151;
+    }
+    .record-card .record-answers strong {
+      color: #1f2937;
+    }
+
+    .loading {
+      text-align: center; padding: 60px 0; color: #6b7280; font-size: 15px;
+    }
+    .empty {
+      text-align: center; padding: 60px 0; color: #9ca3af; font-size: 15px;
+    }
+
+    .refresh-btn {
+      display: block; margin: 0 auto 16px; padding: 10px 28px;
+      background: #1a73e8; color: #fff; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .refresh-btn:hover { opacity: 0.9; }
+
+    .back-link {
+      display: inline-block; margin-top: 16px; color: #1a73e8;
+      text-decoration: none; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 调查结果统计</h1>
+      <p>校园文明现状调查</p>
+      <div class="total-badge" id="totalBadge">共 0 份答卷</div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadData()">🔄 刷新数据</button>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('stats', this)">📈 统计概览</button>
+      <button class="tab" onclick="switchTab('records', this)">📋 答卷明细</button>
+    </div>
+
+    <div id="statsPanel" class="panel active"></div>
+    <div id="recordsPanel" class="panel"></div>
+  </div>
+
+  <script>
+  async function loadData() {
+    document.getElementById('statsPanel').innerHTML = '<div class="loading">⏳ 加载中…</div>';
+    document.getElementById('recordsPanel').innerHTML = '';
+    document.getElementById('totalBadge').textContent = '共 0 份答卷';
+
+    try {
+      const [statsRes, recordsRes] = await Promise.all([
+        fetch('/api/stats'),
+        fetch('/api/results')
+      ]);
+      const stats = await statsRes.json();
+      const records = await recordsRes.json();
+
+      document.getElementById('totalBadge').textContent = `共 ${stats.total || 0} 份答卷`;
+      renderStats(stats);
+      renderRecords(records);
+    } catch (e) {
+      document.getElementById('statsPanel').innerHTML = '<div class="empty">❌ 加载失败，请确认服务已启动</div>';
+    }
+  }
+
+  function renderStats(data) {
+    const panel = document.getElementById('statsPanel');
+    if (!data.ok || data.total === 0) {
+      panel.innerHTML = '<div class="empty">📭 暂无答卷数据</div>';
+      return;
+    }
+
+    let html = '';
+    for (const [qTitle, stat] of Object.entries(data.stats)) {
+      html += '<div class="stat-card"><h3>' + qTitle + '</h3>';
+
+      // Average for rating
+      if (stat.__avg != null) {
+        html += '<div class="avg-badge">⭐ 平均分：' + stat.__avg.toFixed(1) + ' / 5</div>';
+      }
+
+      // Text entries
+      if (stat.__entries) {
+        stat.__entries.forEach(entry => {
+          html += '<div class="detail-item">' + escapeHtml(entry) + '</div>';
+        });
+        html += '<div style="font-size:12px;color:#9ca3af;margin-top:4px;">共 ' + stat.__count + ' 条回答</div>';
+      } else {
+        // Normal bar chart
+        const items = Object.entries(stat).filter(([k]) => k !== '__count' && k !== '__avg' && k !== '__entries' && k !== '__maxSelect');
+        const maxCount = Math.max(...items.map(([, v]) => v), 1);
+        items.forEach(([opt, count]) => {
+          const pct = (count / data.total * 100).toFixed(1);
+          const width = (count / maxCount * 100).toFixed(1);
+          html += '<div class="stat-row">';
+          html += '<span class="label">' + escapeHtml(opt) + '</span>';
+          html += '<div class="bar-wrap"><div class="bar-fill" style="width:' + width + '%"></div></div>';
+          html += '<span class="pct-label">' + pct + '%</span>';
+          html += '<span class="count">' + count + '</span>';
+          html += '</div>';
+        });
+      }
+
+      html += '</div>';
+    }
+
+    panel.innerHTML = html;
+  }
+
+  function renderRecords(data) {
+    const panel = document.getElementById('recordsPanel');
+    if (!data.ok || !data.data || data.data.length === 0) {
+      panel.innerHTML = '<div class="empty">📭 暂无答卷</div>';
+      return;
+    }
+
+    let html = '';
+    // latest first
+    const records = [...data.data].reverse();
+    records.forEach(r => {
+      html += '<div class="record-card">';
+      html += '<div class="record-meta">🆔 ' + r.id + ' · ' + r.submittedAt + '</div>';
+      html += '<div class="record-answers">';
+      for (const [q, a] of Object.entries(r.answers)) {
+        const display = Array.isArray(a) ? a.join('、') : a;
+        if (display) {
+          html += '<strong>' + escapeHtml(q) + '</strong>：' + escapeHtml(display) + '<br>';
+        }
+      }
+      html += '</div></div>';
+    });
+
+    panel.innerHTML = html;
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(name + 'Panel').classList.add('active');
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  loadData();
+  </script>
+</body>
+</html>
